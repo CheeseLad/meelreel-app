@@ -7,6 +7,7 @@ import Profile from "./components/Profile";
 import PrivateRoute from "./components/PrivateRoute";
 import SearchPage from "./components/SearchPage";
 import RecipePage from "./components/RecipePage";
+import Post from "./components/Post";
 
 function App() {
   return (
@@ -21,10 +22,18 @@ function App() {
           }
         />
         <Route
-          path="/profile"
+          path="/profile/:username"
           element={
             <PrivateRoute>
               <Profile />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/post"
+          element={
+            <PrivateRoute>
+              <Post />
             </PrivateRoute>
           }
         />

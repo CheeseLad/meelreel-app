@@ -1,38 +1,43 @@
 import React, { useState } from "react";
-import axios from "axios";
 import FooterNav from "../components/FooterNav";
 
 const RecipePage = () => {
   const [ingredients, setIngredients] = useState("");
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
+    setError("");
+    
     try {
-      const response = await axios.post(
-        "https://api.openai.com/v1/engines/text-davinci-003/completions",
-        {
-          prompt: `Suggest recipes based on these ingredients: ${ingredients}`,
-          max_tokens: 150,
-          temperature: 0.7,
-          top_p: 1,
-          frequency_penalty: 0,
-          presence_penalty: 0,
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.REACT_APP_OPENAI_API_KEY}`,  // Replace with your OpenAI API key
         },
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.REACT_APP_OPENAI_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+        body: JSON.stringify({
+          model: "gpt-3.5-turbo",  // Or the model you prefer
+          messages: [
+            { role: 'user', content: `Suggest recipes based on these ingredients: ${ingredients}` }
+          ],
+          max_tokens: 150,  // Adjust based on how long you expect the response to be
+        }),
+      });
 
-      setRecipes(response.data.choices[0].text.trim().split("\n"));
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const recipeText = data.choices[0].message.content.trim();
+      setRecipes(recipeText.split('\n').filter(recipe => recipe.trim() !== ''));
     } catch (error) {
       console.error("Error fetching recipes:", error);
+      setError("Failed to fetch recipes. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -62,7 +67,7 @@ const RecipePage = () => {
             </button>
           </form>
         </div>
-
+        {error && <p className="text-red-500">{error}</p>}
         {recipes.length > 0 && (
           <div>
             <h3 className="text-xl font-semibold mb-4">Suggested Recipes</h3>
